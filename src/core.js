@@ -94,6 +94,14 @@
           if (/\/shorts\/?$/.test(url)) return true;
           break;
         }
+        // Search "Shorts" filter chip and filter option. These carry no
+        // stable id, only the label; English UI assumed.
+        case 'chipCloudChipRenderer':
+        case 'searchFilterRenderer': {
+          const label = v.text?.simpleText || v.label?.simpleText || '';
+          if (label === 'Shorts') return true;
+          break;
+        }
       }
     }
     return false;
@@ -276,6 +284,41 @@ yt-tab-shape[tab-title="Shorts"]
     }
   };
   setInterval(tick, 250);
+
+  // ------------------------------------------------------------- 5. codecs
+
+  // Ask YouTube for H.264 instead of AV1/VP9. Every iPad decodes H.264 in
+  // hardware, which saves battery, and AV1 does not play in the simulator.
+  const NO_CODEC = /av01|vp0?9/i;
+  const wrapTypeCheck = (obj, name) => {
+    if (!obj || typeof obj[name] !== 'function') return;
+    obj[name] = new Proxy(obj[name], {
+      apply(target, thisArg, args) {
+        if (typeof args[0] === 'string' && NO_CODEC.test(args[0])) return false;
+        return Reflect.apply(target, thisArg, args);
+      },
+    });
+  };
+  wrapTypeCheck(window.MediaSource, 'isTypeSupported');
+  wrapTypeCheck(window.ManagedMediaSource, 'isTypeSupported');
+  if (window.HTMLMediaElement) {
+    const canPlay = HTMLMediaElement.prototype.canPlayType;
+    HTMLMediaElement.prototype.canPlayType = new Proxy(canPlay, {
+      apply(target, thisArg, args) {
+        if (typeof args[0] === 'string' && NO_CODEC.test(args[0])) return '';
+        return Reflect.apply(target, thisArg, args);
+      },
+    });
+  }
+  if (navigator.mediaCapabilities && navigator.mediaCapabilities.decodingInfo) {
+    navigator.mediaCapabilities.decodingInfo = new Proxy(navigator.mediaCapabilities.decodingInfo, {
+      apply(target, thisArg, args) {
+        const ct = args[0]?.video?.contentType || '';
+        if (NO_CODEC.test(ct)) return Promise.resolve({ supported: false, smooth: false, powerEfficient: false });
+        return Reflect.apply(target, thisArg, args);
+      },
+    });
+  }
 
   // ---------------------------------------------------------------- report
 

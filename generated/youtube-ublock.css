@@ -1,0 +1,16 @@
+#contents > ytd-rich-item-renderer:has(> ytd-ad-slot-renderer) { display: none !important; }
+#description-inner > ytd-merch-shelf-renderer > #main.ytd-merch-shelf-renderer { display: none !important; }
+#shopping-timely-shelf { display: none !important; }
+#shorts-inner-container > .ytd-shorts:has(> .ytd-reel-video-renderer > ytd-ad-slot-renderer) { display: none !important; }
+#sticker-layer { display: none !important; }
+.ytReelMetapanelViewModelHost > .ytReelMetapanelViewModelMetapanelItem > .ytShortsSuggestedActionViewModelStaticHost { display: none !important; }
+.ytd-section-list-renderer > .ytd-item-section-renderer > ytd-search-pyv-renderer.ytd-item-section-renderer { display: none !important; }
+.ytd-two-column-browse-results-renderer > ytd-rich-grid-renderer > #masthead-ad.ytd-rich-grid-renderer { display: none !important; }
+.ytd-watch-flexy > .ytd-watch-next-secondary-results-renderer > ytd-ad-slot-renderer.ytd-watch-next-secondary-results-renderer { display: none !important; }
+.ytd-watch-flexy > ytd-merch-shelf-renderer > #main.ytd-merch-shelf-renderer { display: none !important; }
+.ytp-suggested-action > .ytp-suggested-action-badge { display: none !important; }
+yt-overlay-product-sticker { display: none !important; }
+ytd-rich-item-renderer:has(> #content > ytd-ad-slot-renderer) { display: none !important; }
+.grid.ytd-browse > #primary > .style-scope > .ytd-rich-grid-renderer > .ytd-rich-grid-renderer > .ytd-ad-slot-renderer { display: none !important; }
+.ytd-rich-item-renderer.style-scope > .ytd-rich-item-renderer > .ytd-ad-slot-renderer.style-scope { display: none !important; }
+ytd-item-section-renderer > .ytd-item-section-renderer > ytd-ad-slot-renderer.style-scope { display: none !important; }

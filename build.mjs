@@ -12,7 +12,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = dirname(fileURLToPath(import.meta.url));
-const parts = ['src/core.js', 'generated/ublock.js'].filter((p) => existsSync(join(root, p)));
+const parts = ['src/core.js', 'generated/youtube-ublock.js'].filter((p) => existsSync(join(root, p)));
 
 const now = new Date();
 const pad = (n) => String(n).padStart(2, '0');
