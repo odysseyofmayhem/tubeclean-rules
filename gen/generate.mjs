@@ -53,12 +53,13 @@ async function getUbo() {
     if ( !dir ) {
         dir = path.join(HERE, '..', '.cache', 'uBlock');
         const exists = await fs.stat(path.join(dir, '.git')).then(() => true, () => false);
-        if ( exists ) {
-            execSync('git fetch --depth 1 origin master && git reset -q --hard FETCH_HEAD', { cwd: dir, stdio: 'ignore' });
-        } else {
+        // UBO_REF pins the uBO commit whose code runs here; default: master.
+        const ref = process.env.UBO_REF || 'master';
+        if ( !exists ) {
             await fs.mkdir(path.dirname(dir), { recursive: true });
             execSync(`git clone -q --depth 1 https://github.com/gorhill/uBlock.git "${dir}"`, { stdio: 'ignore' });
         }
+        execSync(`git fetch --depth 1 origin ${ref} && git reset -q --hard FETCH_HEAD`, { cwd: dir, stdio: 'ignore' });
     }
     const commit = execSync('git rev-parse HEAD', { cwd: dir }).toString().trim();
     return { dir, commit };
@@ -374,6 +375,19 @@ if ( $remove$.length ) {
 })();
 `;
 
+// Checks before anything is written: the output must parse, and the core
+// YouTube ad scriptlets must still be there. If uAssets reshuffles its rules
+// we want a loud failure, not a quietly useless file.
+new Function(js); // throws on syntax error
+const MIN_SCRIPTLETS = 10;
+const mustHave = [ 'json-prune', 'json-prune-fetch-response' ];
+const names = new Set(included.map(i => i.scriptlet.replace(/\.js$/, '')));
+const missing = mustHave.filter(n => !names.has(n));
+if ( included.length < MIN_SCRIPTLETS || missing.length ) {
+    console.error(`FATAL: ${included.length} scriptlets (min ${MIN_SCRIPTLETS}), missing: ${missing.join(', ') || '-'}`);
+    process.exit(2);
+}
+
 await fs.mkdir(OUT_DIR, { recursive: true });
 await fs.writeFile(path.join(OUT_DIR, 'youtube-ublock.js'), js);
 await fs.writeFile(path.join(OUT_DIR, 'youtube-ublock.css'), css + '\n');
@@ -387,9 +401,6 @@ const manifest = {
     sha256: createHash('sha256').update(js).digest('hex'),
 };
 await fs.writeFile(path.join(OUT_DIR, 'manifest.json'), JSON.stringify(manifest, null, 1));
-
-// Sanity: the output must at least parse.
-new Function(js); // throws on syntax error
 
 console.log(`uBO ${ubo.commit.slice(0, 10)}  env=${ENV.join('|')}`);
 console.log(`included scriptlets: ${included.length}`);

@@ -1,5 +1,5 @@
-/* tubeclean-rules version=202610120314 */
-/* built 2026-10-12T03:14:58.119Z from: src/core.js, generated/youtube-ublock.js */
+/* tubeclean-rules version=202610120341 */
+/* content=6aa42fc0d440564f built 2026-10-12T03:41:54.080Z from: src/core.js, generated/youtube-ublock.js */
 
 /* ---- src/core.js ---- */
 try {
@@ -45,9 +45,10 @@ try {
   ]);
 
   // Video entries that may point at a Short instead of a normal video.
+  // Playlist entries are left alone: removing one shifts the list and the
+  // "next" pointer. A Short picked from a playlist is redirected instead.
   const VIDEO_ENTRIES = new Set([
-    'videoRenderer', 'compactVideoRenderer', 'gridVideoRenderer',
-    'lockupViewModel', 'playlistVideoRenderer', 'playlistPanelVideoRenderer',
+    'videoRenderer', 'compactVideoRenderer', 'gridVideoRenderer', 'lockupViewModel',
   ]);
 
   const SHORTS_URL = /^\/shorts\//;
@@ -269,7 +270,11 @@ yt-tab-shape[tab-title="Shorts"]
     if (mp && v && mp.classList.contains('ad-showing')) {
       if (!inAd) { inAd = true; mutedBefore = v.muted; stats.adSkips++; }
       v.muted = true;
-      if (Number.isFinite(v.duration) && v.duration > 0 && v.currentTime < v.duration - 0.2) {
+      // Seek only in a short, separate ad stream. With ads stitched into the
+      // video stream, the duration is the real video's and seeking would
+      // skip it; there we only mute and press Skip.
+      if (Number.isFinite(v.duration) && v.duration > 0 && v.duration < 90 &&
+          v.currentTime < v.duration - 0.2) {
         v.currentTime = v.duration - 0.1;
       }
       for (const b of document.querySelectorAll(
@@ -288,7 +293,12 @@ yt-tab-shape[tab-title="Shorts"]
       if (v && v.paused) v.play().catch(() => {});
     }
   };
-  setInterval(tick, 250);
+  // Fast while a player exists, slow elsewhere, to spare the battery.
+  const loop = () => {
+    tick();
+    setTimeout(loop, document.getElementById('movie_player') ? 250 : 1000);
+  };
+  loop();
 
   // ------------------------------------------------------------- 5. codecs
 
