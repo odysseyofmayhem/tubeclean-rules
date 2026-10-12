@@ -1,5 +1,5 @@
-/* tubeclean-rules version=202610120341 */
-/* content=6aa42fc0d440564f built 2026-10-12T03:41:54.080Z from: src/core.js, generated/youtube-ublock.js */
+/* tubeclean-rules version=202610121501 */
+/* content=b8278b6c957c186c built 2026-10-12T15:01:19.509Z from: src/core.js, generated/youtube-ublock.js */
 
 /* ---- src/core.js ---- */
 try {
@@ -83,8 +83,11 @@ try {
           if (shouldDrop(v.content, depth + 1)) return true;
           break;
         case 'richShelfRenderer':
+          // Drop a whole shelf only if it is a Shorts shelf or everything in
+          // it would go; otherwise clean() removes the bad entries one by one.
           if (v.isShorts === true) return true;
-          if (Array.isArray(v.contents) && v.contents.some((c) => shouldDrop(c, depth + 1))) return true;
+          if (Array.isArray(v.contents) && v.contents.length > 0 &&
+              v.contents.every((c) => shouldDrop(c, depth + 1))) return true;
           break;
         case 'gridShelfViewModel':
           if (Array.isArray(v.contents) &&
@@ -269,14 +272,9 @@ yt-tab-shape[tab-title="Shorts"]
     const v = mp && mp.querySelector('video');
     if (mp && v && mp.classList.contains('ad-showing')) {
       if (!inAd) { inAd = true; mutedBefore = v.muted; stats.adSkips++; }
+      // Mute and press Skip only. Seeking to the end looks tempting, but
+      // with ads stitched into the stream it skips the real video too.
       v.muted = true;
-      // Seek only in a short, separate ad stream. With ads stitched into the
-      // video stream, the duration is the real video's and seeking would
-      // skip it; there we only mute and press Skip.
-      if (Number.isFinite(v.duration) && v.duration > 0 && v.duration < 90 &&
-          v.currentTime < v.duration - 0.2) {
-        v.currentTime = v.duration - 0.1;
-      }
       for (const b of document.querySelectorAll(
         '.ytp-skip-ad-button, .ytp-ad-skip-button, .ytp-ad-skip-button-modern')) b.click();
     } else if (inAd) {

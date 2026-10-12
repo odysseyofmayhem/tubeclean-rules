@@ -23,9 +23,7 @@ jobs:
         run: |
           npm i --no-save playwright
           npx playwright install --with-deps webkit
-          node test/playback.mjs dist/tubeclean.js dQw4w9WgXcQ kJQP7kiw5Fk | tee test.log
-          ! grep -q '"playing":false' test.log
-          ! grep -E '"initAdKeys":\[[^]]' test.log
+          node test/playback.mjs dist/tubeclean.js dQw4w9WgXcQ kJQP7kiw5Fk   # exits non-zero on failure
       - name: commit if changed
         run: |
           git config user.name tubeclean-bot

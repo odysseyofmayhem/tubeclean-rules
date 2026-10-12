@@ -38,7 +38,7 @@ for ( const id of ids ) {
     let live; try { live = mp?.getPlayerResponse?.(); } catch {}
     const keys = o => o ? ['adPlacements', 'adSlots', 'playerAds'].filter(k => o[k] !== undefined) : null;
     return { title: document.title.slice(0, 50), initAdKeys: keys(pr), liveAdKeys: keys(live),
-             hasLive: !!live, injected: window.__tubecleanUbo || null,
+             hasLive: !!live, injected: window.__tubecleanUbo || null, core: !!window.__tubecleanCore,
              playability: live?.playabilityStatus?.status ?? pr?.playabilityStatus?.status,
              cssPresent: !!document.getElementById('tubeclean-ubo-css') };
   });
@@ -64,3 +64,20 @@ for ( const id of ids ) {
   await ctx.close();
 }
 await b.close();
+
+// Gate for publishing: every video must have both parts injected, no ad
+// keys on first load, live or after in-page navigation, and must play.
+// playerAds after in-page navigation is a known uBO gap and is allowed.
+if ( inject ) {
+  const bad = [];
+  for ( const r of results ) {
+    if ( !r.core || !r.injected ) bad.push(`${r.id}: script not injected`);
+    if ( r.initAdKeys?.length ) bad.push(`${r.id}: initial ad keys ${r.initAdKeys}`);
+    if ( r.liveAdKeys?.length ) bad.push(`${r.id}: live ad keys ${r.liveAdKeys}`);
+    const spaAds = (r.spa?.liveAdKeys || []).filter(k => k !== 'playerAds');
+    if ( spaAds.length ) bad.push(`${r.id}: ad keys after navigation ${spaAds}`);
+    if ( !r.playing ) bad.push(`${r.id}: not playing`);
+  }
+  if ( bad.length ) { console.error('FAIL\n' + bad.join('\n')); process.exit(1); }
+  console.log('PASS');
+}

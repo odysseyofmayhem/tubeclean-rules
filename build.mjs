@@ -17,7 +17,9 @@ import { fileURLToPath } from 'node:url';
 
 const root = dirname(fileURLToPath(import.meta.url));
 const outPath = join(root, 'dist/tubeclean.js');
-const parts = ['src/core.js', 'generated/youtube-ublock.js'].filter((p) => existsSync(join(root, p)));
+const parts = ['src/core.js', 'generated/youtube-ublock.js'];
+const missing = parts.filter((p) => !existsSync(join(root, p)));
+if (missing.length) throw new Error(`missing part(s): ${missing.join(', ')} (generated/ comes from gen/generate.mjs)`);
 
 let body = '';
 for (const p of parts) {
@@ -27,10 +29,12 @@ for (const p of parts) {
 const hash = createHash('sha256').update(body).digest('hex').slice(0, 16);
 
 // Keep the previous version if nothing changed.
-if (existsSync(outPath) && !process.env.TC_VERSION) {
+let prevVersion = '';
+if (existsSync(outPath)) {
   const prev = readFileSync(outPath, 'utf8').split('\n', 2);
+  prevVersion = /version=(\d{12})/.exec(prev[0] || '')?.[1] || '';
   const prevHash = /content=([0-9a-f]{16})/.exec(prev[1] || '')?.[1];
-  if (prevHash === hash) {
+  if (prevHash === hash && !process.env.TC_VERSION) {
     console.log(`unchanged (${prev[0]})`);
     process.exit(0);
   }
@@ -41,6 +45,10 @@ const pad = (n) => String(n).padStart(2, '0');
 const version = process.env.TC_VERSION ||
   `${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}`;
 if (!/^\d{12}$/.test(version)) throw new Error(`bad version ${version}: want yyyyMMddHHmm`);
+// The app installs only strictly newer versions; equal would be ignored.
+if (prevVersion && version <= prevVersion) {
+  throw new Error(`version ${version} is not newer than ${prevVersion}; wait a minute and rebuild`);
+}
 
 const out = `/* tubeclean-rules version=${version} */\n` +
   `/* content=${hash} built ${now.toISOString()} from: ${parts.join(', ')} */\n` + body;
