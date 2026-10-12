@@ -1,0 +1,24 @@
+# Draft GitHub Actions workflow (untested on GitHub; locally verified pieces only).
+# Copy to .github/workflows/update.yml in the public repo that hosts the raw file.
+name: regenerate youtube-ublock.js
+on:
+  schedule: [ { cron: '17 */6 * * *' } ]   # 4x/day; uAssets quick-fixes change often
+  workflow_dispatch: {}
+permissions: { contents: write }
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - run: node generate.mjs --out=dist
+      # Optional smoke test (needs: npm i playwright && npx playwright install --with-deps webkit)
+      # - run: node tc-test.mjs dist/youtube-ublock.js dQw4w9WgXcQ
+      - name: commit if changed
+        run: |
+          git config user.name tubeclean-bot
+          git config user.email tubeclean-bot@users.noreply.github.com
+          git status --porcelain dist/youtube-ublock.js | grep -q . || exit 0   # manifest.json alone (timestamps) is not worth a commit
+          git add dist/youtube-ublock.js dist/youtube-ublock.css dist/manifest.json
+          git diff --cached --quiet || git commit -m "regen $(date -u +%FT%TZ)" && git push
