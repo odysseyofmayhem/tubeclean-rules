@@ -1,6 +1,6 @@
 # tubeclean-rules
 
-The blocking script for the [TubeClean](../tubeclean) iPad app. It removes ads and Shorts from YouTube's desktop site.
+The blocking script for the [TubeClean](https://github.com/odysseyofmayhem/tubeclean) iPad app. It removes ads and Shorts from YouTube's desktop site.
 
 The build produces one file, `dist/tubeclean.js`. The app ships with a copy of it and checks this repo's raw GitHub URL every 6 hours. It installs a newer version without needing an app rebuild.
 
@@ -57,7 +57,7 @@ Headless tests run signed out. Seeing whether ads appear while signed in still n
 
 1. Build and test as above.
 2. Copy it into the app: in `../tubeclean`, run `scripts/sync-rules.sh`.
-3. Commit both repos. Once this repo is public on GitHub, pushing `dist/tubeclean.js` is enough for installed apps to update themselves.
+3. Commit both repos. Pushing `dist/tubeclean.js` is enough for installed apps to update themselves.
 
 `gen/github-workflow-draft.yml` is a draft job that regenerates, tests and commits every day. It hasn't been run on GitHub yet.
 
@@ -68,4 +68,4 @@ Headless tests run signed out. Seeing whether ads appear while signed in still n
 - uBlock Origin and uAssets: GPL-3.0-or-later, Copyright Raymond Hill and contributors
 - EasyList: GPL-3.0 or CC BY-SA 3.0
 
-Publishing this repo counts as distribution, so license it GPL-3.0 when it goes public.
+This repo is public, which counts as distribution, so it is licensed GPL-3.0-or-later: see `LICENSE`.
